@@ -1,0 +1,115 @@
+---
+title: "SDR vs SAGE (no_correlation)"
+execute:
+  echo: false
+  warning: false
+format: 
+  html:
+    toc: true
+    toc-location: left
+
+editor: visual
+---
+
+## Correlation between solidarity from SDGs and SAGE
+
+```{r}
+#| echo: false
+#| warning: false
+library(scales)
+library(tidyverse)
+library(dplyr)
+library(haven)
+library(forcats)
+library(foreign)
+library(readr)
+library(readxl)
+library(tibble)
+library(naniar)
+library(viridis)
+library(ggsci)
+library(ggplot2)
+library(purrr)
+library(fmsb)
+library(viridisLite)
+#library(writexl)
+library(MetBrewer)
+#library(ftplottools)
+library(plotly)
+library(hrbrthemes)
+library(NatParksPalettes)
+#library(Manu)
+
+```
+
+```{r}
+#| echo: false
+#| warning: false
+SDR_SAGE <- read_excel("C:/Users/feror/Global Solutions Initiative Foundation gGmbH/GSIF Neu - 06_Program & Research/Recoupling Dashboard/Dashboard (inkl ifw)/Data/SDR_SAGE.xlsx")
+
+SDR_SAGE$Country[SDR_SAGE$Country == "Korea, Dem. Rep."] <- "North Korea"
+SDR_SAGE$income_group[is.na(SDR_SAGE$income_group)] <- "Low income"
+SDR_SAGE$continent[is.na(SDR_SAGE$continent)] <- "East Asia & Pacific"
+
+
+SDR_SAGE <- SDR_SAGE %>% 
+   mutate(solidarity_mean_e = solidarity_mean / 100)
+
+
+fig_1<- ggplot(SDR_SAGE, aes(x = solidarity_mean_e, y = sol_index)) + geom_point(color = "indianred4", alpha = .6) +geom_abline(size=0.5, color="grey")+labs(title = "Relation between the Solidarity of the SDGs and the Recoupling Dashboard") + theme(plot.title = element_text(lineheight = 0.5)) + 
+  labs(x = "Solidarity and Inclusion from the SDGs", y = "Solidarity from the Recoupling Dashboard") + theme_minimal() + geom_smooth(method = "lm", color = "darksalmon", fill = "coral3")+ xlim(0, 1)+ylim(0, 1)
+  
+
+fig_final_1<-ggplotly(fig_1)
+
+fig_final_1 %>% style(text= paste('</br> Country: ', SDR_SAGE$Country,
+                      '</br> Solidarity SDGs: ',SDR_SAGE$solidarity_mean_e,
+                      '</br> Solidarity SAGE: ', SDR_SAGE$sol_index))
+                
+
+
+```
+
+```{r}
+#| echo: false
+#| warning: false
+
+cor_sage_sdg_sol <- cor.test(SDR_SAGE$solidarity_mean_e, SDR_SAGE$sol_index, method = "pearson")
+
+
+cor_sage_sdg_sol
+```
+
+## Correlation between Agency from SDGs and SAGE
+
+```{r}
+
+#| echo: false
+#| warning: false
+
+SDR_SAGE <- SDR_SAGE %>% 
+   mutate(agency_mean_e = agency_mean / 100)
+
+
+fig_2<- ggplot(SDR_SAGE, aes(x = agency_mean_e, y = ag_index)) + geom_point(color = "steelblue4", alpha = .6) +geom_abline(size=0.5, color="grey")+labs(title = "Relation between the Agency of the SDGs and the Recoupling Dashboard") + theme(plot.title = element_text(lineheight = 0.5)) + 
+  labs(x = "Agency and Resilience from the SDG", y = "Agency from the Recoupling Dashboard") + theme_minimal() + geom_smooth(method = "lm", , color = "royalblue", fill = "steelblue")+ xlim(0, 1)+ylim(0, 1)
+  
+
+fig_final_2<-ggplotly(fig_2)
+
+fig_final_2 %>% style(text= paste('</br> Country: ', SDR_SAGE$Country,
+                      '</br> Solidarity SDGs: ',SDR_SAGE$agency_mean_e,
+                      '</br> Solidarity SAGE: ', SDR_SAGE$ag_index))
+                
+
+
+```
+
+```{r}
+#| echo: false
+#| warning: false
+cor_sage_sdg_ag <- cor.test(SDR_SAGE$agency_mean_e, SDR_SAGE$ag_index, method = "pearson")
+
+
+cor_sage_sdg_ag
+```

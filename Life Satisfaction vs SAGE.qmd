@@ -1,0 +1,129 @@
+---
+title: "SAGE vs Life Satisfaction"
+execute:
+  echo: false
+  warning: false
+format: 
+  html:
+    toc: true
+    toc-location: left
+
+editor: visual
+---
+
+## OECD Better Life Index 2020
+
+This Index allows you to compare well-being across countries, based on 11 topics, including "life satisfaction", in the areas of material living conditions and quality of life.
+
+There are 36 countries (OECD members) analyzed both by the Better Life Index and the SAGE dashboard: Australia, Austria, Belgium, Canada, Czech Republic, Denmark, Finland, France, Germany, Greece, Hungary, Iceland, Ireland, Italy, Japan, Mexico, Netherlands, New Zealand, Norway, Poland, Portugal, Spain, Sweden, Switzerland, United Kingdom, United States, Brazil, Chile, Estonia, Israel, Latvia, Russia, Slovenia, South Africa, Colombia, and Lithuania.
+
+```{r}
+library(scales)
+library(tidyverse)
+library(dplyr)
+library(haven)
+library(forcats)
+library(foreign)
+library(readr)
+library(readxl)
+library(tibble)
+library(naniar)
+library(viridis)
+library(ggsci)
+library(ggplot2)
+library(purrr)
+library(fmsb)
+library(viridisLite)
+#library(writexl)
+library(MetBrewer)
+#library(ftplottools)
+library(plotly)
+library(hrbrthemes)
+library(NatParksPalettes)
+#library(Manu)
+
+```
+
+### Solidarity Index and Life Satisfaction
+
+```{r}
+
+sage <- read_excel("C:/Users/feror/Global Solutions Initiative Foundation gGmbH/GSIF Neu - 06_Program & Research/Recoupling Dashboard/Dashboard (inkl ifw)/Data/SAGE_2020_update_2021_12_08.xlsx")
+
+oecd2<- read.csv("C:/Users/feror/Downloads/BLI_10022023135217813.csv")
+
+
+main_var <- sage %>%
+  select(Country, Year, `Solidarity Index`, `1-year change Solidarity`, `Agency Index`, `1-year change Agency`, 
+         `GDP per capita`, `CO2 Emissions per capita (tonnes/person)`, `10-year change Solidarity`, `10-year change Agency`, 
+         `Inward Solidarity Index`, `1-year change s_inward`, `10-year change s_inward`, `Outward Solidarity Index`, `1-year change s_outward`,
+         `10-year change s_outward`, Region, IncomeGroup)
+
+names(main_var) <- c('Country', 'Year', 'solidarity_index', 'oney_change_sol', 'agency_index', 'oney_change_ag', 
+                      'gdp_per_capita','CO2_per_capita' ,'teny_change_sol', 'teny_change_ag', 
+                      'inward_sol_index', 'oney_change_sol_inward', 'teny_change_s_inward', 'outward_sol_index', 'oney_change_s_outward',
+                      'teny_change_s_outward', 'Region', 'IncomeGroup')
+
+
+main_var_2020 <- main_var %>%
+  filter(Year == 2020)
+
+# First of all, we will omit the NAs so that we can envisage the compatible variables and not allow if to interfere in the analysis.
+
+main_var_2020 <- main_var_2020 %>%
+  na.omit(agency_index) %>%
+  na.omit(solidarity_index)
+
+```
+
+```{r}
+#| echo: false
+life_satis_2<- oecd2 %>% 
+  filter(Indicator=="Life satisfaction") %>% 
+  filter(Inequality=="Total")
+
+second_set<- inner_join(life_satis_2, main_var_2020, by='Country')
+second_set <- second_set %>% 
+   mutate(value_final = Value / 10)
+```
+
+```{r}
+b <- ggplot(second_set, aes(x = value_final, y = solidarity_index)) + 
+  geom_smooth(method = "lm", color = "burlywood3", fill = "darkorange1") + geom_point(color = "bisque3", alpha = .6) + 
+  labs(title = "Relation between Life Satisfaction and Solidarity") + theme(plot.title = element_text(lineheight = 0.5)) + 
+  labs(x = "Life Satisfaction", y = "Solidarity Index") + theme_minimal() + geom_hline(aes(yintercept = mean(solidarity_index)), color = "sienna2") + geom_vline(aes(xintercept = mean(value_final)), color = "wheat4")
+
+
+fig_final_sol<-ggplotly(b)%>% style(text= paste('</br> Country: ', second_set$Country,
+                      '</br> Solidarity SAGE: ',second_set$solidarity_index,
+                      '</br> Life Satisfaction: ', second_set$value_final))
+fig_final_sol
+```
+
+```{r}
+cor_life_sol_2 <- cor.test(second_set$solidarity_index, second_set$value_final, method = "pearson")
+
+cor_life_sol_2
+```
+
+### Agency Index and Life Satisfaction
+
+```{r}
+
+
+p2<- ggplot(second_set, aes(x = value_final, y = agency_index)) + 
+  geom_smooth(method = "lm", color = "burlywood", fill = "#69b3a2") + geom_point(color = "indianred4", alpha = .6) + 
+  labs(title = "Relation between Life Satisfaction and Agency") + theme(plot.title = element_text(lineheight = 0.5)) + 
+  labs(x = "Life Satisfaction", y = "Agency Index") + theme_minimal() + geom_hline(aes(yintercept = mean(agency_index)), color = "sienna2") + geom_vline(aes(xintercept = mean(value_final)), color = "wheat4")
+
+fig_final_ag<-ggplotly(p2)%>% style(text= paste('</br> Country: ', second_set$Country,
+                      '</br> Agency SAGE: ',second_set$agency_index,
+                      '</br> Life Satisfaction: ', second_set$value_final))
+fig_final_ag
+```
+
+```{r}
+cor_life_sol_2 <- cor.test(second_set$agency_index, second_set$value_final, method = "pearson")
+
+cor_life_sol_2
+```
